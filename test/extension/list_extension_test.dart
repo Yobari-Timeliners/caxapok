@@ -497,4 +497,193 @@ void main() {
       expect(result.first, isIn([1, 2]));
     });
   });
+
+  group('splice()', () {
+    test('removes elements and returns them', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 1, count: 2);
+
+      expect(removed, equals([2, 3]));
+      expect(list, equals([1, 4, 5]));
+    });
+
+    test('removes elements and inserts new ones', () {
+      final list = ['a', 'b', 'c', 'd'];
+
+      final removed = list.splice(start: 1, count: 2, insert: ['x', 'y', 'z']);
+
+      expect(removed, equals(['b', 'c']));
+      expect(list, equals(['a', 'x', 'y', 'z', 'd']));
+    });
+
+    test('inserts elements without removing (count: 0)', () {
+      final list = [1, 2, 5];
+
+      final removed = list.splice(start: 2, count: 0, insert: [3, 4]);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3, 4, 5]));
+    });
+
+    test('removes elements from the beginning', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 0, count: 2);
+
+      expect(removed, equals([1, 2]));
+      expect(list, equals([3, 4, 5]));
+    });
+
+    test('removes elements from the end', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 3, count: 2);
+
+      expect(removed, equals([4, 5]));
+      expect(list, equals([1, 2, 3]));
+    });
+
+    test('removes all elements', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 0, count: 3);
+
+      expect(removed, equals([1, 2, 3]));
+      expect(list, isEmpty);
+    });
+
+    test('removes single element', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 2, count: 1);
+
+      expect(removed, equals([3]));
+      expect(list, equals([1, 2, 4, 5]));
+    });
+
+    test('replaces single element with multiple', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 1, count: 1, insert: [10, 20, 30]);
+
+      expect(removed, equals([2]));
+      expect(list, equals([1, 10, 20, 30, 3]));
+    });
+
+    test('replaces multiple elements with single', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 1, count: 3, insert: [99]);
+
+      expect(removed, equals([2, 3, 4]));
+      expect(list, equals([1, 99, 5]));
+    });
+
+    test('inserts at the beginning', () {
+      final list = [3, 4, 5];
+
+      final removed = list.splice(start: 0, count: 0, insert: [1, 2]);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3, 4, 5]));
+    });
+
+    test('inserts at the end', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 3, count: 0, insert: [4, 5]);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3, 4, 5]));
+    });
+
+    test('works with empty list', () {
+      final list = <int>[];
+
+      final removed = list.splice(start: 0, count: 0, insert: [1, 2, 3]);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3]));
+    });
+
+    test('works with complex objects', () {
+      final list = [
+        const EqualStub(id: 1, name: 'a'),
+        const EqualStub(id: 2, name: 'b'),
+        const EqualStub(id: 3, name: 'c'),
+      ];
+
+      final removed = list.splice(
+        start: 1,
+        count: 1,
+        insert: [const EqualStub(id: 4, name: 'd')],
+      );
+
+      expect(removed, equals([const EqualStub(id: 2, name: 'b')]));
+      expect(
+        list,
+        equals([
+          const EqualStub(id: 1, name: 'a'),
+          const EqualStub(id: 4, name: 'd'),
+          const EqualStub(id: 3, name: 'c'),
+        ]),
+      );
+    });
+
+    test('returns empty list when count is 0 and no insert', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 1, count: 0);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3]));
+    });
+
+    test('replaces entire list', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 0, count: 3, insert: [7, 8, 9]);
+
+      expect(removed, equals([1, 2, 3]));
+      expect(list, equals([7, 8, 9]));
+    });
+
+    test('removes without insert parameter', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 2, count: 2);
+
+      expect(removed, equals([3, 4]));
+      expect(list, equals([1, 2, 5]));
+    });
+
+    test('insert null explicitly as empty list', () {
+      final list = [1, 2, 3, 4];
+
+      final removed = list.splice(start: 1, count: 2, insert: null);
+
+      expect(removed, equals([2, 3]));
+      expect(list, equals([1, 4]));
+    });
+
+    test('preserves list type', () {
+      final list = <String>['a', 'b', 'c'];
+
+      final removed = list.splice(start: 1, count: 1, insert: ['x']);
+
+      expect(removed, isA<List<String>>());
+      expect(list, isA<List<String>>());
+    });
+
+    test('modifies original list in place', () {
+      final list = [1, 2, 3, 4, 5];
+      final originalList = list;
+
+      list.splice(start: 2, count: 1, insert: [99]);
+
+      expect(identical(list, originalList), isTrue);
+      expect(list, equals([1, 2, 99, 4, 5]));
+    });
+  });
 }

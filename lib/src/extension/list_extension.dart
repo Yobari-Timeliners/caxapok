@@ -135,4 +135,45 @@ extension ListExtension<T> on List<T> {
 
     return newList;
   }
+
+  /// Removes [count] elements starting at [start] and optionally inserts new elements.
+  ///
+  /// This method modifies the list in place and returns the removed elements.
+  /// Similar to JavaScript's Array.splice() method.
+  ///
+  /// The [start] parameter specifies the index at which to start removing elements.
+  /// The [count] parameter specifies how many elements to remove.
+  /// The optional [insert] parameter contains elements to insert at the [start] position.
+  ///
+  /// Example:
+  ///
+  /// ```dart
+  /// final list = [1, 2, 3, 4, 5];
+  ///
+  /// // Remove 2 elements starting at index 1
+  /// final removed = list.splice(start: 1, count: 2);
+  /// print(removed); // [2, 3]
+  /// print(list); // [1, 4, 5]
+  ///
+  /// // Remove and insert
+  /// final list2 = ['a', 'b', 'c', 'd'];
+  /// final removed2 = list2.splice(start: 1, count: 2, insert: ['x', 'y', 'z']);
+  /// print(removed2); // ['b', 'c']
+  /// print(list2); // ['a', 'x', 'y', 'z', 'd']
+  ///
+  /// // Insert without removing
+  /// final list3 = [1, 2, 5];
+  /// list3.splice(start: 2, count: 0, insert: [3, 4]);
+  /// print(list3); // [1, 2, 3, 4, 5]
+  /// ```
+  List<T> splice({
+    required int start,
+    required int count,
+    Iterable<T>? insert,
+  }) {
+    final result = [...getRange(start, start + count)];
+    replaceRange(start, start + count, insert ?? []);
+
+    return result;
+  }
 }
