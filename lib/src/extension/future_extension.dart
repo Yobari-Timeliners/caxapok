@@ -12,7 +12,7 @@ extension FutureExtension<T> on Future<T> {
   /// - Any chained operations (like `then`, `catchError`) will receive the exception
   ///
   /// If the original future completes before cancellation, the task completes normally
-  /// and calling [cancel] afterwards has no effect.
+  /// and calling cancel afterwards has no effect.
   ///
   /// The [onCancel] callback can be either synchronous or asynchronous (returning
   /// `void` or `Future<void>`). It's useful for cleanup operations like:
