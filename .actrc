@@ -1,0 +1,3 @@
+# Configuration for act (local GitHub Actions runner)
+# This ensures act uses the same platform as the CI
+-P ubuntu-latest=catthehacker/ubuntu:act-latest

@@ -1,0 +1,1384 @@
+import 'package:caxapok/src/extension/list_extension.dart';
+import 'package:test/test.dart';
+
+import '../stubs.dart';
+
+void main() {
+  group('tryGet()', () {
+    test('returns element at valid index', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.tryGet(2), equals(3));
+      expect(list.tryGet(0), equals(1));
+      expect(list.tryGet(4), equals(5));
+    });
+
+    test('returns null for negative index', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.tryGet(-1), isNull);
+      expect(list.tryGet(-5), isNull);
+      expect(list.tryGet(-100), isNull);
+    });
+
+    test('returns null for index beyond list length', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.tryGet(5), isNull);
+      expect(list.tryGet(10), isNull);
+      expect(list.tryGet(100), isNull);
+    });
+
+    test('returns null for empty list', () {
+      const list = <int>[];
+
+      expect(list.tryGet(0), isNull);
+      expect(list.tryGet(1), isNull);
+      expect(list.tryGet(-1), isNull);
+    });
+
+    test('returns first element at index 0', () {
+      const list = [10, 20, 30];
+
+      expect(list.tryGet(0), equals(10));
+    });
+
+    test('returns last element at index length-1', () {
+      const list = [10, 20, 30];
+
+      expect(list.tryGet(2), equals(30));
+    });
+
+    test('returns null at boundary index equal to length', () {
+      const list = [1, 2, 3];
+
+      expect(list.tryGet(3), isNull);
+    });
+
+    test('works with single element list', () {
+      const list = [42];
+
+      expect(list.tryGet(0), equals(42));
+      expect(list.tryGet(1), isNull);
+      expect(list.tryGet(-1), isNull);
+    });
+
+    test('works with complex objects', () {
+      const list = [
+        EqualStub(id: 1, name: 'a'),
+        EqualStub(id: 2, name: 'b'),
+        EqualStub(id: 3, name: 'c'),
+      ];
+
+      expect(list.tryGet(1), equals(const EqualStub(id: 2, name: 'b')));
+      expect(list.tryGet(5), isNull);
+    });
+
+    test('works with nullable elements', () {
+      const list = [1, null, 3];
+
+      expect(list.tryGet(0), equals(1));
+      expect(list.tryGet(1), isNull);
+      expect(list.tryGet(2), equals(3));
+    });
+
+    test('distinguishes between null element and out of bounds', () {
+      const list = [1, null, 3];
+
+      // Null element at valid index
+      final resultValid = list.tryGet(1);
+      expect(resultValid, isNull);
+
+      // Out of bounds also returns null
+      final resultOutOfBounds = list.tryGet(10);
+      expect(resultOutOfBounds, isNull);
+
+      // Both are null, but for different reasons - this is expected behavior
+    });
+
+    test('works with strings', () {
+      const list = ['a', 'b', 'c'];
+
+      expect(list.tryGet(0), equals('a'));
+      expect(list.tryGet(2), equals('c'));
+      expect(list.tryGet(3), isNull);
+    });
+
+    test('works with large indices', () {
+      const list = [1, 2, 3];
+
+      expect(list.tryGet(1000000), isNull);
+    });
+
+    test('works with very negative indices', () {
+      const list = [1, 2, 3];
+
+      expect(list.tryGet(-1000000), isNull);
+    });
+  });
+
+  group('nextAfter()', () {
+    test('returns next element in sequence', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.nextAfter(2), equals(3));
+      expect(list.nextAfter(3), equals(4));
+    });
+
+    test('wraps around from last element to first', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.nextAfter(5), equals(1));
+    });
+
+    test('returns second element when item is first', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.nextAfter(1), equals(2));
+    });
+
+    test('works with single element list', () {
+      const list = [42];
+
+      expect(list.nextAfter(42), equals(42));
+    });
+
+    test('works with two element list', () {
+      const list = [1, 2];
+
+      expect(list.nextAfter(1), equals(2));
+      expect(list.nextAfter(2), equals(1));
+    });
+
+    test('works with complex objects', () {
+      const list = [
+        EqualStub(id: 1, name: 'a'),
+        EqualStub(id: 2, name: 'b'),
+        EqualStub(id: 3, name: 'c'),
+      ];
+
+      expect(
+        list.nextAfter(const EqualStub(id: 2, name: 'b')),
+        equals(const EqualStub(id: 3, name: 'c')),
+      );
+      expect(
+        list.nextAfter(const EqualStub(id: 3, name: 'c')),
+        equals(const EqualStub(id: 1, name: 'a')),
+      );
+    });
+
+    test('handles duplicates by finding first occurrence', () {
+      const list = [1, 2, 2, 3, 4];
+
+      // Should find first occurrence of 2 at index 1, next is 2 at index 2
+      expect(list.nextAfter(2), equals(2));
+    });
+
+    test('returns first element when item not found in list', () {
+      const list = [1, 2, 3, 4, 5];
+
+      // indexOf returns -1, so (−1 + 1) % 5 = 0
+      expect(list.nextAfter(99), equals(1));
+    });
+
+    test('works with strings', () {
+      const list = ['a', 'b', 'c', 'd'];
+
+      expect(list.nextAfter('b'), equals('c'));
+      expect(list.nextAfter('d'), equals('a'));
+    });
+
+    test('maintains circular iteration', () {
+      const list = [1, 2, 3];
+
+      var current = 1;
+      current = list.nextAfter(current); // 2
+      expect(current, equals(2));
+
+      current = list.nextAfter(current); // 3
+      expect(current, equals(3));
+
+      current = list.nextAfter(current); // 1 (wrapped)
+      expect(current, equals(1));
+
+      current = list.nextAfter(current); // 2
+      expect(current, equals(2));
+    });
+
+    test('works with nullable elements', () {
+      const list = [1, null, 3, 4];
+
+      expect(list.nextAfter(1), isNull);
+      expect(list.nextAfter(null), equals(3));
+      expect(list.nextAfter(4), equals(1));
+    });
+
+    test('works with negative numbers', () {
+      const list = [-2, -1, 0, 1, 2];
+
+      expect(list.nextAfter(-1), equals(0));
+      expect(list.nextAfter(2), equals(-2));
+    });
+  });
+
+  group('maybeNextAfter()', () {
+    test('returns next element in sequence', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.maybeNextAfter(2), equals(3));
+      expect(list.maybeNextAfter(3), equals(4));
+    });
+
+    test('returns null when item is last element', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.maybeNextAfter(5), isNull);
+    });
+
+    test('returns second element when item is first', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.maybeNextAfter(1), equals(2));
+    });
+
+    test('returns null for single element list', () {
+      const list = [42];
+
+      expect(list.maybeNextAfter(42), isNull);
+    });
+
+    test('works with two element list', () {
+      const list = [1, 2];
+
+      expect(list.maybeNextAfter(1), equals(2));
+      expect(list.maybeNextAfter(2), isNull);
+    });
+
+    test('returns null for empty list', () {
+      const list = <int>[];
+
+      expect(list.maybeNextAfter(1), isNull);
+    });
+
+    test('returns null when item not found', () {
+      const list = [1, 2, 3, 4, 5];
+
+      expect(list.maybeNextAfter(99), isNull);
+    });
+
+    test('works with complex objects', () {
+      const list = [
+        EqualStub(id: 1, name: 'a'),
+        EqualStub(id: 2, name: 'b'),
+        EqualStub(id: 3, name: 'c'),
+      ];
+
+      expect(
+        list.maybeNextAfter(const EqualStub(id: 2, name: 'b')),
+        equals(const EqualStub(id: 3, name: 'c')),
+      );
+      expect(
+        list.maybeNextAfter(const EqualStub(id: 3, name: 'c')),
+        isNull,
+      );
+    });
+
+    test('handles duplicates by finding first occurrence', () {
+      const list = [1, 2, 2, 3, 4];
+
+      // Should find first occurrence of 2 at index 1, next is 2 at index 2
+      expect(list.maybeNextAfter(2), equals(2));
+    });
+
+    test('works with strings', () {
+      const list = ['a', 'b', 'c', 'd'];
+
+      expect(list.maybeNextAfter('b'), equals('c'));
+      expect(list.maybeNextAfter('d'), isNull);
+    });
+
+    test('stops at end without wrapping', () {
+      const list = [1, 2, 3];
+
+      const current = 1;
+      final next1 = list.maybeNextAfter(current);
+      expect(next1, equals(2));
+
+      if (next1 != null) {
+        final next2 = list.maybeNextAfter(next1);
+        expect(next2, equals(3));
+
+        if (next2 != null) {
+          final next3 = list.maybeNextAfter(next2);
+          expect(next3, isNull); // Stops here, no wrap
+        }
+      }
+    });
+
+    test('works with nullable elements', () {
+      const list = [1, null, 3, 4];
+
+      expect(list.maybeNextAfter(1), isNull);
+      expect(list.maybeNextAfter(null), equals(3));
+      expect(list.maybeNextAfter(3), equals(4));
+      expect(list.maybeNextAfter(4), isNull);
+    });
+
+    test('works with negative numbers', () {
+      const list = [-2, -1, 0, 1, 2];
+
+      expect(list.maybeNextAfter(-1), equals(0));
+      expect(list.maybeNextAfter(2), isNull);
+    });
+
+    test('difference from nextAfter on last element', () {
+      const list = [1, 2, 3];
+
+      // nextAfter wraps around
+      expect(list.nextAfter(3), equals(1));
+
+      // maybeNextAfter returns null
+      expect(list.maybeNextAfter(3), isNull);
+    });
+  });
+
+  group('resizedDiscrete()', () {
+    test('returns original list when empty', () {
+      const list = <int>[];
+
+      final result = list.resizedDiscrete(5);
+
+      expect(result, same(list));
+    });
+
+    test('returns original list when length is the same', () {
+      const list = [1, 2, 3, 4, 5];
+
+      final result = list.resizedDiscrete(5);
+
+      expect(result, same(list));
+    });
+
+    test('downsamples to smaller length', () {
+      const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+      final result = list.resizedDiscrete(5);
+
+      expect(result, hasLength(5));
+      // Should sample elements proportionally across the list
+      expect(result, isNotEmpty);
+    });
+
+    test('upsamples to larger length', () {
+      const list = [1, 2, 3];
+
+      final result = list.resizedDiscrete(5);
+
+      expect(result, hasLength(5));
+      // Should duplicate some elements to reach target length
+      expect(result, isNotEmpty);
+    });
+
+    test('downsamples to single element', () {
+      const list = [1, 2, 3, 4, 5];
+
+      final result = list.resizedDiscrete(1);
+
+      expect(result, hasLength(1));
+      // Should pick one element from the list
+      expect(result.first, isIn(list));
+    });
+
+    test('upsamples single element to multiple', () {
+      const list = [42];
+
+      final result = list.resizedDiscrete(5);
+
+      expect(result, hasLength(5));
+      // All elements should be the same
+      expect(result, everyElement(equals(42)));
+    });
+
+    test('maintains element types', () {
+      const list = ['a', 'b', 'c', 'd', 'e'];
+
+      final result = list.resizedDiscrete(3);
+
+      expect(result, hasLength(3));
+      expect(result, everyElement(isA<String>()));
+    });
+
+    test('works with complex objects', () {
+      const list = [
+        EqualStub(id: 1, name: 'a'),
+        EqualStub(id: 2, name: 'b'),
+        EqualStub(id: 3, name: 'c'),
+      ];
+
+      final result = list.resizedDiscrete(2);
+
+      expect(result, hasLength(2));
+      expect(result, everyElement(isA<EqualStub>()));
+    });
+
+    test('handles large downsampling', () {
+      final list = List.generate(1000, (i) => i);
+
+      final result = list.resizedDiscrete(10);
+
+      expect(result, hasLength(10));
+      // Elements should be spread across the original range
+      expect(result.first, lessThan(100));
+      expect(result.last, greaterThanOrEqualTo(850));
+    });
+
+    test('handles large upsampling', () {
+      const list = [1, 2, 3];
+
+      final result = list.resizedDiscrete(100);
+
+      expect(result, hasLength(100));
+      // All elements should come from the original list
+      for (final item in result) {
+        expect(item, isIn(list));
+      }
+    });
+
+    test('preserves elements from original list', () {
+      const list = [10, 20, 30, 40, 50];
+
+      final result = list.resizedDiscrete(3);
+
+      expect(result, hasLength(3));
+      // All result elements should exist in original list
+      for (final item in result) {
+        expect(item, isIn(list));
+      }
+    });
+
+    test('works with nullable elements', () {
+      const list = [1, null, 3, null, 5];
+
+      final result = list.resizedDiscrete(3);
+
+      expect(result, hasLength(3));
+      // Should handle nulls correctly
+    });
+
+    test('proportional sampling for downsampling', () {
+      const list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+      final result = list.resizedDiscrete(5);
+
+      expect(result, hasLength(5));
+      // Should sample across the range, not just first or last elements
+      expect(result.first, equals(0));
+      expect(result.last, greaterThanOrEqualTo(7));
+    });
+
+    test('handles two-element list resized to three', () {
+      const list = [1, 2];
+
+      final result = list.resizedDiscrete(3);
+
+      expect(result, hasLength(3));
+      // Should only contain elements from original list
+      for (final item in result) {
+        expect(item, isIn([1, 2]));
+      }
+    });
+
+    test('handles two-element list resized to one', () {
+      const list = [1, 2];
+
+      final result = list.resizedDiscrete(1);
+
+      expect(result, hasLength(1));
+      expect(result.first, isIn([1, 2]));
+    });
+  });
+
+  group('splice()', () {
+    test('removes elements and returns them', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 1, count: 2);
+
+      expect(removed, equals([2, 3]));
+      expect(list, equals([1, 4, 5]));
+    });
+
+    test('removes elements and inserts new ones', () {
+      final list = ['a', 'b', 'c', 'd'];
+
+      final removed = list.splice(start: 1, count: 2, insert: ['x', 'y', 'z']);
+
+      expect(removed, equals(['b', 'c']));
+      expect(list, equals(['a', 'x', 'y', 'z', 'd']));
+    });
+
+    test('inserts elements without removing (count: 0)', () {
+      final list = [1, 2, 5];
+
+      final removed = list.splice(start: 2, count: 0, insert: [3, 4]);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3, 4, 5]));
+    });
+
+    test('removes elements from the beginning', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 0, count: 2);
+
+      expect(removed, equals([1, 2]));
+      expect(list, equals([3, 4, 5]));
+    });
+
+    test('removes elements from the end', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 3, count: 2);
+
+      expect(removed, equals([4, 5]));
+      expect(list, equals([1, 2, 3]));
+    });
+
+    test('removes all elements', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 0, count: 3);
+
+      expect(removed, equals([1, 2, 3]));
+      expect(list, isEmpty);
+    });
+
+    test('removes single element', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 2, count: 1);
+
+      expect(removed, equals([3]));
+      expect(list, equals([1, 2, 4, 5]));
+    });
+
+    test('replaces single element with multiple', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 1, count: 1, insert: [10, 20, 30]);
+
+      expect(removed, equals([2]));
+      expect(list, equals([1, 10, 20, 30, 3]));
+    });
+
+    test('replaces multiple elements with single', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 1, count: 3, insert: [99]);
+
+      expect(removed, equals([2, 3, 4]));
+      expect(list, equals([1, 99, 5]));
+    });
+
+    test('inserts at the beginning', () {
+      final list = [3, 4, 5];
+
+      final removed = list.splice(start: 0, count: 0, insert: [1, 2]);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3, 4, 5]));
+    });
+
+    test('inserts at the end', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 3, count: 0, insert: [4, 5]);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3, 4, 5]));
+    });
+
+    test('works with empty list', () {
+      final list = <int>[];
+
+      final removed = list.splice(start: 0, count: 0, insert: [1, 2, 3]);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3]));
+    });
+
+    test('works with complex objects', () {
+      final list = [
+        const EqualStub(id: 1, name: 'a'),
+        const EqualStub(id: 2, name: 'b'),
+        const EqualStub(id: 3, name: 'c'),
+      ];
+
+      final removed = list.splice(
+        start: 1,
+        count: 1,
+        insert: [const EqualStub(id: 4, name: 'd')],
+      );
+
+      expect(removed, equals([const EqualStub(id: 2, name: 'b')]));
+      expect(
+        list,
+        equals([
+          const EqualStub(id: 1, name: 'a'),
+          const EqualStub(id: 4, name: 'd'),
+          const EqualStub(id: 3, name: 'c'),
+        ]),
+      );
+    });
+
+    test('returns empty list when count is 0 and no insert', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 1, count: 0);
+
+      expect(removed, isEmpty);
+      expect(list, equals([1, 2, 3]));
+    });
+
+    test('replaces entire list', () {
+      final list = [1, 2, 3];
+
+      final removed = list.splice(start: 0, count: 3, insert: [7, 8, 9]);
+
+      expect(removed, equals([1, 2, 3]));
+      expect(list, equals([7, 8, 9]));
+    });
+
+    test('removes without insert parameter', () {
+      final list = [1, 2, 3, 4, 5];
+
+      final removed = list.splice(start: 2, count: 2);
+
+      expect(removed, equals([3, 4]));
+      expect(list, equals([1, 2, 5]));
+    });
+
+    test('insert null explicitly as empty list', () {
+      final list = [1, 2, 3, 4];
+
+      final removed = list.splice(start: 1, count: 2, insert: null);
+
+      expect(removed, equals([2, 3]));
+      expect(list, equals([1, 4]));
+    });
+
+    test('preserves list type', () {
+      final list = <String>['a', 'b', 'c'];
+
+      final removed = list.splice(start: 1, count: 1, insert: ['x']);
+
+      expect(removed, isA<List<String>>());
+      expect(list, isA<List<String>>());
+    });
+
+    test('modifies original list in place', () {
+      final list = [1, 2, 3, 4, 5];
+      final originalList = list;
+
+      list.splice(start: 2, count: 1, insert: [99]);
+
+      expect(identical(list, originalList), isTrue);
+      expect(list, equals([1, 2, 99, 4, 5]));
+    });
+  });
+
+  group('nearestAt()', () {
+    group('basic functionality', () {
+      test('returns nearest valid element in both directions', () {
+        const list = [1, 2, null, null, 5];
+
+        expect(list.nearestAt(3), equals(5));
+        expect(list.nearestAt(2), equals(2));
+      });
+
+      test('returns null for empty list', () {
+        const list = <int?>[];
+
+        expect(list.nearestAt(0), isNull);
+        expect(list.nearestAt(5), isNull);
+      });
+
+      test('returns nearest when all elements are valid', () {
+        const list = [1, 2, 3, 4, 5];
+
+        expect(list.nearestAt(2), equals(2)); // searches neighbors, left is index 1 (value 2)
+        expect(list.nearestAt(0), equals(2)); // searches neighbors, right is index 1 (value 2)
+      });
+
+      test('skips null elements by default', () {
+        const list = [1, null, null, 4, 5];
+
+        expect(list.nearestAt(1), equals(1));
+        expect(list.nearestAt(2), equals(4));
+      });
+
+      test('prefers left element when equidistant', () {
+        const list = [1, null, 3];
+
+        expect(list.nearestAt(1), equals(1));
+      });
+    });
+
+    group('searchDirection parameter', () {
+      test('searches only left', () {
+        const list = [1, 2, null, 4, 5];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: const .new(
+              searchDirection: .left,
+            ),
+          ),
+          equals(2),
+        );
+      });
+
+      test('searches only right', () {
+        const list = [1, 2, null, 4, 5];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: const .new(
+              searchDirection: .right,
+            ),
+          ),
+          equals(4),
+        );
+      });
+
+      test('left search returns null when no valid element on left', () {
+        const list = [null, null, 3, 4, 5];
+
+        expect(
+          list.nearestAt(
+            1,
+            configuration: const .new(
+              searchDirection: .left,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('right search returns null when no valid element on right', () {
+        const list = [1, 2, 3, null, null];
+
+        expect(
+          list.nearestAt(
+            3,
+            configuration: const .new(
+              searchDirection: .right,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('both direction searches in both directions', () {
+        const list = [1, null, null, null, 5];
+
+        expect(
+          list.nearestAt(2),
+          equals(1),
+        );
+      });
+    });
+
+    group('bounds parameter', () {
+      test('clamp bounds handles negative index', () {
+        const list = [10, 20, 30];
+
+        expect(
+          list.nearestAt(-1),
+          equals(20), // clamped to 0, then searches neighbors, finds 20 at index 1
+        );
+      });
+
+      test('clamp bounds handles index beyond length', () {
+        const list = [10, 20, 30];
+
+        expect(
+          list.nearestAt(5),
+          equals(20), // clamped to 2, then searches neighbors, finds 20 at index 1
+        );
+      });
+
+      test('wrap bounds handles negative index', () {
+        const list = [10, 20, 30];
+
+        expect(
+          list.nearestAt(
+            -1,
+            configuration: const .new(
+              bounds: .wrap,
+            ),
+          ),
+          equals(20), // wraps to index 2 (30), then searches neighbors, finds 20 at index 1
+        );
+      });
+
+      test('wrap bounds handles index beyond length', () {
+        const list = [10, 20, 30];
+
+        expect(
+          list.nearestAt(
+            3,
+            configuration: const .new(
+              bounds: .wrap,
+            ),
+          ),
+          equals(20), // wraps to index 0 (10), then searches neighbors, finds 20 at index 1
+        );
+      });
+
+      test('wrap bounds handles large negative index', () {
+        const list = [10, 20, 30];
+
+        expect(
+          list.nearestAt(
+            -4,
+            configuration: const .new(
+              bounds: .wrap,
+            ),
+          ),
+          equals(20),
+        );
+      });
+
+      test('nullify bounds returns null for negative index', () {
+        const list = [10, 20, 30];
+
+        expect(
+          list.nearestAt(
+            -1,
+            configuration: const .new(
+              bounds: .nullify,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('nullify bounds returns null for index beyond length', () {
+        const list = [10, 20, 30];
+
+        expect(
+          list.nearestAt(
+            5,
+            configuration: const .new(
+              bounds: .nullify,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('error bounds throws for negative index', () {
+        const list = [10, 20, 30];
+
+        expect(
+          () => list.nearestAt(
+            -1,
+            configuration: const .new(
+              bounds: .error,
+            ),
+          ),
+          throwsA(isA<RangeError>()),
+        );
+      });
+
+      test('error bounds throws for index beyond length', () {
+        const list = [10, 20, 30];
+
+        expect(
+          () => list.nearestAt(
+            5,
+            configuration: const .new(
+              bounds: .error,
+            ),
+          ),
+          throwsA(isA<RangeError>()),
+        );
+      });
+    });
+
+    group('targetIndex parameter', () {
+      test('include checks target index first', () {
+        const list = [1, 2, 3, 4, 5];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: const .new(
+              targetIndex: .include,
+            ),
+          ),
+          equals(3),
+        );
+      });
+
+      test('exclude skips target index', () {
+        const list = [null, 1, 2, null, 4];
+
+        expect(
+          list.nearestAt(
+            2,
+          ),
+          equals(1),
+        );
+      });
+
+      test('include returns target if valid', () {
+        const list = [null, null, 3, null, null];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: const .new(
+              targetIndex: .include,
+            ),
+          ),
+          equals(3),
+        );
+      });
+
+      test('include searches neighbors if target invalid', () {
+        const list = [1, null, 3];
+
+        expect(
+          list.nearestAt(
+            1,
+            configuration: const .new(
+              targetIndex: .include,
+            ),
+          ),
+          equals(1),
+        );
+      });
+    });
+
+    group('maxDistance parameter', () {
+      test('limits search distance', () {
+        const list = [1, null, null, null, 5];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: const .new(
+              maxDistance: 1,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('finds element within max distance', () {
+        const list = [1, null, null, 4, 5];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: const .new(
+              maxDistance: 2,
+            ),
+          ),
+          equals(4),
+        );
+      });
+
+      test('maxDistance of 0 checks only target when included', () {
+        const list = [1, 2, 3];
+
+        expect(
+          list.nearestAt(
+            1,
+            configuration: const .new(
+              maxDistance: 0,
+              targetIndex: .include,
+            ),
+          ),
+          equals(2),
+        );
+      });
+
+      test('maxDistance of 0 returns null when target excluded', () {
+        const list = [1, 2, 3];
+
+        expect(
+          list.nearestAt(
+            1,
+            configuration: const .new(
+              maxDistance: 0,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('null maxDistance searches unlimited', () {
+        const list = [1, null, null, null, null, null, null, 8];
+
+        expect(
+          list.nearestAt(3),
+          equals(1),
+        );
+      });
+    });
+
+    group('predicate parameter', () {
+      test('uses custom predicate for validation', () {
+        const list = [1, 2, 3, 4, 5, 6];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: NearestAtConfiguration(
+              predicate: (element) => element > 3,
+            ),
+          ),
+          equals(4),
+        );
+      });
+
+      test('custom predicate filters elements', () {
+        const list = [1, 2, 3, 4, 5];
+
+        expect(
+          list.nearestAt(
+            1,
+            configuration: NearestAtConfiguration(
+              predicate: (element) => element.isEven,
+            ),
+          ),
+          equals(4), // index 1 excluded, searches neighbors for even numbers, finds 4 at index 3
+        );
+      });
+
+      test('predicate returning false for all returns null', () {
+        const list = [1, 2, 3, 4, 5];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: NearestAtConfiguration(
+              predicate: (element) => element > 10,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('predicate with complex logic', () {
+        const list = [1, 2, 3, 4, 5, 6, 7, 8];
+
+        expect(
+          list.nearestAt(
+            3,
+            configuration: NearestAtConfiguration(
+              predicate: (element) => element > 2 && element < 7,
+            ),
+          ),
+          equals(3),
+        );
+      });
+    });
+
+    group('fallback parameter', () {
+      test('returns fallback when no valid element found', () {
+        const list = <int?>[null, null, null];
+
+        expect(
+          list.nearestAt(
+            1,
+            configuration: NearestAtConfiguration(
+              fallback: () => 99,
+            ),
+          ),
+          equals(99),
+        );
+      });
+
+      test('returns fallback for empty list', () {
+        const list = <int>[];
+
+        expect(
+          list.nearestAt(
+            0,
+            configuration: NearestAtConfiguration(
+              fallback: () => 42,
+            ),
+          ),
+          equals(42),
+        );
+      });
+
+      test('returns fallback when out of bounds with nullify', () {
+        const list = [1, 2, 3];
+
+        expect(
+          list.nearestAt(
+            10,
+            configuration: NearestAtConfiguration(
+              bounds: NearestAtBoundsStrategy.nullify,
+              fallback: () => -1,
+            ),
+          ),
+          equals(-1),
+        );
+      });
+
+      test('returns fallback when max distance exceeded', () {
+        const list = [1, null, null, null, 5];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: NearestAtConfiguration(
+              maxDistance: 1,
+              fallback: () => 0,
+            ),
+          ),
+          equals(0),
+        );
+      });
+
+      test('null fallback returns null', () {
+        const list = <int?>[null, null, null];
+
+        expect(
+          list.nearestAt(1),
+          isNull,
+        );
+      });
+    });
+
+    group('combined configurations', () {
+      test('left search with clamp and predicate', () {
+        const list = [1, 2, 3, 4, 5];
+
+        expect(
+          list.nearestAt(
+            -1,
+            configuration: NearestAtConfiguration(
+              searchDirection: NearestAtSearchDirection.left,
+              predicate: (element) => element > 2,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('right search with wrap and maxDistance', () {
+        const list = [1, 2, null, null, 5];
+
+        expect(
+          list.nearestAt(
+            4,
+            configuration: const .new(
+              searchDirection: .right,
+              bounds: .wrap,
+              maxDistance: 1,
+            ),
+          ),
+          isNull,
+        );
+      });
+
+      test('include target with predicate', () {
+        const list = [1, 2, 3, 4, 5];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: NearestAtConfiguration(
+              targetIndex: NearestAtTargetIndexStrategy.include,
+              predicate: (element) => element.isOdd,
+            ),
+          ),
+          equals(3), // target index 2 has value 3 which is odd, so returns it
+        );
+      });
+
+      test('all parameters combined', () {
+        const list = [1, 2, 3, 4, 5, 6, 7, 8];
+
+        expect(
+          list.nearestAt(
+            10,
+            configuration: NearestAtConfiguration(
+              searchDirection: NearestAtSearchDirection.left,
+              targetIndex: NearestAtTargetIndexStrategy.include,
+              maxDistance: 3,
+              predicate: (element) => element > 5,
+              fallback: () => 0,
+            ),
+          ),
+          equals(8), // clamped to index 7 (value 8), which is > 5, so returns it
+        );
+      });
+    });
+
+    group('edge cases', () {
+      test('single element list with valid element', () {
+        const list = [42];
+
+        expect(
+          list.nearestAt(
+            0,
+            configuration: const .new(
+              targetIndex: .include,
+            ),
+          ),
+          equals(42),
+        );
+      });
+
+      test('single element list with invalid element', () {
+        const list = <int?>[null];
+
+        expect(list.nearestAt(0), isNull);
+      });
+
+      test('all null elements', () {
+        const list = <int?>[null, null, null, null];
+
+        expect(list.nearestAt(2), isNull);
+      });
+
+      test('alternating valid and null elements', () {
+        const list = [1, null, 3, null, 5];
+
+        expect(list.nearestAt(1), equals(1));
+        expect(list.nearestAt(3), equals(3));
+      });
+
+      test('works with complex objects', () {
+        const list = [
+          EqualStub(id: 1, name: 'a'),
+          null,
+          EqualStub(id: 3, name: 'c'),
+        ];
+
+        expect(
+          list.nearestAt(1),
+          equals(const EqualStub(id: 1, name: 'a')),
+        );
+      });
+
+      test('valid element at beginning', () {
+        const list = [1, null, null, null];
+
+        expect(list.nearestAt(2), equals(1));
+      });
+
+      test('valid element at end', () {
+        const list = <int?>[null, null, null, 4];
+
+        expect(list.nearestAt(1), equals(4));
+      });
+
+      test('two valid elements equidistant, prefers left', () {
+        const list = [1, null, 3];
+
+        expect(list.nearestAt(1), equals(1));
+      });
+
+      test('large index with wrap', () {
+        const list = [1, 2, 3];
+
+        expect(
+          list.nearestAt(
+            100,
+            configuration: const .new(
+              bounds: .wrap,
+              targetIndex: .include,
+            ),
+          ),
+          equals(2),
+        );
+      });
+
+      test('negative index with wrap', () {
+        const list = [1, 2, 3];
+
+        expect(
+          list.nearestAt(
+            -10,
+            configuration: const .new(
+              bounds: .wrap,
+              targetIndex: .include,
+            ),
+          ),
+          equals(3),
+        );
+      });
+    });
+
+    group('real-world scenarios', () {
+      test('find nearest non-zero value in sparse array', () {
+        const list = [0, 0, 5, 0, 0];
+
+        expect(
+          list.nearestAt(
+            3,
+            configuration: NearestAtConfiguration(
+              predicate: (element) => element != 0,
+            ),
+          ),
+          equals(5),
+        );
+      });
+
+      test('find nearest even number', () {
+        const list = [1, 3, 5, 6, 7, 9];
+
+        expect(
+          list.nearestAt(
+            2,
+            configuration: NearestAtConfiguration(
+              predicate: (element) => element.isEven,
+            ),
+          ),
+          equals(6),
+        );
+      });
+
+      test('navigation with boundaries', () {
+        const list = [1, 2, 3, 4, 5];
+
+        // Simulate going back from position 1, should clamp to 0
+        expect(
+          list.nearestAt(
+            -1,
+            configuration: const .new(
+              targetIndex: .include,
+            ),
+          ),
+          equals(1),
+        );
+      });
+
+      test('search within limited range', () {
+        const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+        expect(
+          list.nearestAt(
+            4,
+            configuration: NearestAtConfiguration(
+              maxDistance: 2,
+              predicate: (element) => element > 6,
+            ),
+          ),
+          equals(7),
+        );
+      });
+    });
+  });
+}
