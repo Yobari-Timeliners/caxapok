@@ -99,42 +99,6 @@ class CancellableTask<T> implements Future<T> {
   final FutureOr<void> Function()? _onCancel;
 
   CancellableTask({
-    /// Cancels this task, preventing it from completing normally.
-    ///
-    /// When called:
-    /// 1. If the task has already completed, this method does nothing
-    /// 2. Otherwise, executes the `onCancel` callback (if provided)
-    /// 3. Completes the task with a [TaskCancelledException]
-    ///
-    /// This method is idempotent - calling it multiple times has no additional effect.
-    ///
-    /// Any operations chained to this task (via `then`, `catchError`, etc.) will
-    /// receive the [TaskCancelledException].
-    ///
-    /// Returns a [Future] that completes when the cancellation is done. If `onCancel`
-    /// throws an error, that error will be propagated through the returned future,
-    /// but the task itself will still complete with [TaskCancelledException].
-    ///
-    /// Example:
-    ///
-    /// ```dart
-    /// final task = Future.delayed(Duration(seconds: 10))
-    ///   .cancellable(onCancel: () async {
-    ///     // Cleanup code here
-    ///     await closeConnections();
-    ///   });
-    ///
-    /// // Cancel after 1 second
-    /// await Future.delayed(Duration(seconds: 1));
-    /// await task.cancel();
-    ///
-    /// // Task is now cancelled
-    /// try {
-    ///   await task;
-    /// } on TaskCancelledException {
-    ///   print('Operation was cancelled');
-    /// }
-    /// ```
     required Future<T> future,
     FutureOr<void> Function()? onCancel,
   }) : _future = future,
@@ -157,24 +121,6 @@ class CancellableTask<T> implements Future<T> {
 
   @override
   Future<T> timeout(Duration timeLimit, {FutureOr<T> Function()? onTimeout}) =>
-      /// Exception thrown when a [CancellableTask] is cancelled.
-      ///
-      /// This exception is thrown to any code awaiting a cancelled task, as well as
-      /// to any chained operations (like `then` or `catchError`).
-      ///
-      /// You can catch this specific exception to handle cancellation separately
-      /// from other errors:
-      ///
-      /// ```dart
-      /// try {
-      ///   final result = await cancellableTask;
-      ///   print('Completed: $result');
-      /// } on TaskCancelledException {
-      ///   print('Task was cancelled');
-      /// } catch (e) {
-      ///   print('Other error: $e');
-      /// }
-      /// ```
       _completer.future.timeout(timeLimit, onTimeout: onTimeout);
 
   @override
@@ -211,6 +157,24 @@ class CancellableTask<T> implements Future<T> {
   }
 }
 
+/// Exception thrown when a [CancellableTask] is cancelled.
+///
+/// This exception is thrown to any code awaiting a cancelled task, as well as
+/// to any chained operations (like `then` or `catchError`).
+///
+/// You can catch this specific exception to handle cancellation separately
+/// from other errors:
+///
+/// ```dart
+/// try {
+///   final result = await cancellableTask;
+///   print('Completed: $result');
+/// } on TaskCancelledException {
+///   print('Task was cancelled');
+/// } catch (e) {
+///   print('Other error: $e');
+/// }
+/// ```
 final class TaskCancelledException implements Exception {
   const TaskCancelledException();
 
