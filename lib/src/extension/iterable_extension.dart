@@ -8,6 +8,29 @@ typedef IndexedValue<T> = ({int index, T value});
 const _deepCollectionEquality = DeepCollectionEquality();
 
 extension IterableExtension<T> on Iterable<T> {
+  /// Inserts [separator] between every two elements.
+  ///
+  /// Example:
+  ///
+  /// ```dart
+  /// print([1, 2, 3].separated(0).toList()); // [1, 0, 2, 0, 3]
+  ///
+  /// // Flutter
+  /// Column(children: items.map(ItemTile.new).separated(const Divider()).toList());
+  /// ```
+  Iterable<T> separated(T separator) sync* {
+    final iterator = this.iterator;
+
+    if (!iterator.moveNext()) return;
+
+    yield iterator.current;
+
+    while (iterator.moveNext()) {
+      yield separator;
+      yield iterator.current;
+    }
+  }
+
   /// Get the first value [T] satisfying the predicate [test] with its index.
   ///
   /// If no value is found, returns `null`.
@@ -69,12 +92,14 @@ extension IterableExtension<T> on Iterable<T> {
   /// ];
   ///
   /// final difference = list2.difference(
-  ///   other: list1,
+  ///   list1,
   ///   equals: (p0, p1) => p0.id == p1.id,
   ///   hashCode: (item) => item.id.hashCode,
   /// );
   ///
-  /// print(difference); // {removed: [_Stub(id: 2, name: '2')], added: [_Stub(id: 3, name: '3')], updated: [_Stub(id: 4, name: '5')]}
+  /// print(difference.removed); // [_Stub(id: 2, name: '2')]
+  /// print(difference.added); // [_Stub(id: 3, name: '3')]
+  /// print(difference.updated); // [IterableUpdate(old: _Stub(id: 4, name: '4'), updated: _Stub(id: 4, name: '5'))]
   /// ```
   ///
   /// Calculations are performed using [LinkedHashSet], therefore:
@@ -98,12 +123,13 @@ extension IterableExtension<T> on Iterable<T> {
     final updated = <IterableUpdate<T>>[];
 
     for (final item in set) {
-      final otherItem = otherSet.lookup(item);
-
-      if (otherItem == null) {
+      // Check contains first: lookup() returns null both for a missing item and a null item.
+      if (!otherSet.contains(item)) {
         added.add(item);
         continue;
       }
+
+      final otherItem = otherSet.lookup(item) as T;
 
       final willIncludeUpdated = includeUpdatedWhen?.call(item, otherItem) ?? (item != otherItem);
 
@@ -132,7 +158,6 @@ extension IterableExtension<T> on Iterable<T> {
 
   /// Similar to [difference], but with indexing.
   ///
-  /// Will be slower than [difference] on large amounts of data.
   ///
   /// Example:
   ///
@@ -140,7 +165,7 @@ extension IterableExtension<T> on Iterable<T> {
   /// final list1 = [1, 2, 3, 4];
   /// final list2 = [1, 5, 3, 6];
   ///
-  /// final changes = list2.indexedDifference(other: list1);
+  /// final changes = list2.indexedDifference(list1);
   /// print(changes.removed); // [IterableIndexedRemove(data: 2, index: 1), IterableIndexedRemove(data: 4, index: 3)]
   /// print(changes.added); // [IterableIndexedInsert(data: 5, index: 1), IterableIndexedInsert(data: 6, index: 3)]
   /// ```
@@ -150,10 +175,9 @@ extension IterableExtension<T> on Iterable<T> {
     int Function(T item)? hashCode,
     bool Function(T item, T other)? includeUpdatedWhen,
   }) {
-    final otherMap = HashMap<T, IndexedValue<T>>(equals: equals, hashCode: hashCode);
-    final thisMap = HashMap<T, IndexedValue<T>>(equals: equals, hashCode: hashCode);
+    final otherMap = LinkedHashMap<T, IndexedValue<T>>(equals: equals, hashCode: hashCode);
+    final thisMap = LinkedHashMap<T, IndexedValue<T>>(equals: equals, hashCode: hashCode);
 
-    // Use indexed instead of manual iteration
     for (final (index, item) in other.indexed) {
       otherMap[item] = (index: index, value: item);
     }
@@ -308,6 +332,9 @@ final class IterableUpdate<T> {
   });
 
   @override
+  String toString() => 'IterableUpdate(old: $old, updated: $updated)';
+
+  @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is! IterableUpdate<T>) return false;
@@ -323,6 +350,7 @@ final class IterableUpdate<T> {
   );
 }
 
+@immutable
 final class IterableIndexedRemove<T> {
   final T data;
 
@@ -332,24 +360,76 @@ final class IterableIndexedRemove<T> {
     required this.data,
     required this.index,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! IterableIndexedRemove<T>) return false;
+
+    return index == other.index && _deepCollectionEquality.equals(data, other.data);
+  }
+
+  @override
+  int get hashCode => Object.hash(index, _deepCollectionEquality.hash(data));
+
+  @override
+  String toString() => 'IterableIndexedRemove(data: $data, index: $index)';
 }
 
+@immutable
 final class IterableIndexedInsert<T> {
   final T data;
 
   final int index;
 
   const IterableIndexedInsert({required this.data, required this.index});
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! IterableIndexedInsert<T>) return false;
+
+    return index == other.index && _deepCollectionEquality.equals(data, other.data);
+  }
+
+  @override
+  int get hashCode => Object.hash(index, _deepCollectionEquality.hash(data));
+
+  @override
+  String toString() => 'IterableIndexedInsert(data: $data, index: $index)';
 }
 
+@immutable
 final class IterableIndexedUpdate<T> {
   final IndexedValue<T> old;
   final IndexedValue<T> updated;
 
-  IterableIndexedUpdate({
+  const IterableIndexedUpdate({
     required this.old,
     required this.updated,
   });
 
   int get index => updated.index;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! IterableIndexedUpdate<T>) return false;
+
+    return old.index == other.old.index &&
+        updated.index == other.updated.index &&
+        _deepCollectionEquality.equals(old.value, other.old.value) &&
+        _deepCollectionEquality.equals(updated.value, other.updated.value);
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    old.index,
+    updated.index,
+    _deepCollectionEquality.hash(old.value),
+    _deepCollectionEquality.hash(updated.value),
+  );
+
+  @override
+  String toString() => 'IterableIndexedUpdate(old: $old, updated: $updated)';
 }

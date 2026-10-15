@@ -1,7 +1,4 @@
-include: 
-  - package:lints/recommended.yaml
-  # https://github.com/VeryGoodOpenSource/very_good_analysis/blob/main/lib/analysis_options.9.0.0.yaml
-  - package:very_good_analysis/analysis_options.yaml
+include: package:very_good_analysis/analysis_options.yaml
 
 analyzer:
   errors:
@@ -15,7 +12,6 @@ analyzer:
     specify_nonobvious_property_types: ignore
     strict_raw_type: ignore
 
-    
 formatter:
   trailing_commas: preserve
   page_width: 100

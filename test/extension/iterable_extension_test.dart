@@ -1,9 +1,36 @@
-import 'package:caxapok/src/extension/iterable_extension.dart';
+import 'package:caxapok/caxapok.dart';
 import 'package:test/test.dart';
 
 import '../stubs.dart';
 
 void main() {
+  group('separated()', () {
+    test('inserts separator between elements', () {
+      expect([1, 2, 3].separated(0), equals([1, 0, 2, 0, 3]));
+    });
+
+    test('returns empty for empty iterable', () {
+      expect(<int>[].separated(0), isEmpty);
+    });
+
+    test('returns single element without separator', () {
+      expect([1].separated(0), equals([1]));
+    });
+
+    test('is lazy', () {
+      var mapped = 0;
+      final result = [1, 2, 3]
+          .map((e) {
+            mapped++;
+            return e;
+          })
+          .separated(0);
+
+      expect(mapped, equals(0));
+      expect(result.take(2), equals([1, 0]));
+    });
+  });
+
   group('firstIndexedWhereOrNull()', () {
     test('returns first element with index that matches predicate', () {
       const list = [1, 2, 3, 4, 5];
@@ -240,6 +267,17 @@ void main() {
   });
 
   group('difference()', () {
+    test('handles null elements in nullable iterables', () {
+      const list1 = <int?>[null, 1];
+      const list2 = <int?>[null, 2];
+
+      final result = list2.difference(list1);
+
+      expect(result.added, equals([2]));
+      expect(result.removed, equals([1]));
+      expect(result.updated, isEmpty);
+    });
+
     test('returns no difference when both lists are empty', () {
       const list1 = <EqualStub>[];
       const list2 = <EqualStub>[];
@@ -569,6 +607,21 @@ void main() {
   });
 
   group('indexedDifference()', () {
+    test('equal inputs produce equal results', () {
+      final a = [1, 2, 4].indexedDifference([1, 3, 4], includeUpdatedWhen: (_, _) => true);
+      final b = [1, 2, 4].indexedDifference([1, 3, 4], includeUpdatedWhen: (_, _) => true);
+
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+    });
+
+    test('keeps source order of added and removed items', () {
+      final list = [for (var i = 0; i < 20; i++) i];
+
+      expect(list.indexedDifference([]).added.map((e) => e.index), equals(list));
+      expect(<int>[].indexedDifference(list).removed.map((e) => e.index), equals(list));
+    });
+
     test('returns empty result when both lists are identical', () {
       const list1 = [1, 2, 3, 4];
       const list2 = [1, 2, 3, 4];

@@ -14,14 +14,15 @@ extension ListExtension<T> on List<T> {
   /// print(list.tryGet(-1)); // null
   /// ```
   T? tryGet(int index) {
-    if (isEmpty) return null;
-
     return index >= 0 && index < length ? this[index] : null;
   }
 
   /// Returns the next value in order after [item].
   ///
   /// If [item] is the last element, returns the first element of the list.
+  ///
+  /// Throws a [StateError] if the list is empty and an [ArgumentError] if [item]
+  /// is not in the list. Use [maybeNextAfter] for a non-throwing variant.
   ///
   /// Example:
   ///
@@ -31,7 +32,11 @@ extension ListExtension<T> on List<T> {
   /// print(list.nextAfter(5)); // 1 (wraps around)
   /// ```
   T nextAfter(T item) {
+    if (isEmpty) throw StateError('No element');
+
     final index = indexOf(item);
+
+    if (index == -1) throw ArgumentError.value(item, 'item', 'Not found in the list');
 
     final nextIndex = (index + 1) % length;
 
@@ -166,8 +171,8 @@ extension ListExtension<T> on List<T> {
   /// original list based on calculated indices. It does not interpolate values;
   /// it picks actual elements from the source list.
   ///
-  /// If the list is empty or already has the requested [length], returns
-  /// the original list unchanged.
+  /// Always returns a new list, even when the list is empty or already has the
+  /// requested [length].
   ///
   /// The sampling uses a proportional distribution to maintain representation
   /// across the entire original list.
@@ -177,13 +182,13 @@ extension ListExtension<T> on List<T> {
   /// ```dart
   /// final list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   /// print(list.resizedDiscrete(5)); // [1, 3, 5, 7, 9]
-  /// print(list.resizedDiscrete(3)); // [1, 5, 10]
+  /// print(list.resizedDiscrete(3)); // [1, 4, 8]
   ///
   /// final smallList = [1, 2, 3];
-  /// print(smallList.resizedDiscrete(5)); // [1, 1, 2, 2, 3]
+  /// print(smallList.resizedDiscrete(5)); // [1, 2, 2, 3, 3]
   /// ```
   List<T> resizedDiscrete(int length) {
-    if (isEmpty || this.length == length) return this;
+    if (isEmpty || this.length == length) return [...this];
 
     final factor = this.length / length;
     final newList = <T>[];
@@ -353,18 +358,21 @@ enum NearestAtSearchDirection {
 /// list.nearestAt(-1, configuration: NearestAtConfiguration(
 ///   searchDirection: NearestAtSearchDirection.both,
 ///   bounds: NearestAtBoundsStrategy.clamp,
+///   targetIndex: NearestAtTargetIndexStrategy.include,
 /// )); // 10 (clamped to index 0)
 ///
 /// // Wrap around
 /// list.nearestAt(-1, configuration: NearestAtConfiguration(
 ///   searchDirection: NearestAtSearchDirection.both,
 ///   bounds: NearestAtBoundsStrategy.wrap,
+///   targetIndex: NearestAtTargetIndexStrategy.include,
 /// )); // 30 (wrapped to last index)
 ///
 /// // Return null
 /// list.nearestAt(-1, configuration: NearestAtConfiguration(
 ///   searchDirection: NearestAtSearchDirection.both,
 ///   bounds: NearestAtBoundsStrategy.nullify,
+///   targetIndex: NearestAtTargetIndexStrategy.include,
 /// )); // null
 /// ```
 enum NearestAtBoundsStrategy {

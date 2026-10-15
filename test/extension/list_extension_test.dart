@@ -1,4 +1,4 @@
-import 'package:caxapok/src/extension/list_extension.dart';
+import 'package:caxapok/caxapok.dart';
 import 'package:test/test.dart';
 
 import '../stubs.dart';
@@ -174,11 +174,16 @@ void main() {
       expect(list.nextAfter(2), equals(2));
     });
 
-    test('returns first element when item not found in list', () {
+    test('throws ArgumentError when item not found in list', () {
       const list = [1, 2, 3, 4, 5];
 
-      // indexOf returns -1, so (−1 + 1) % 5 = 0
-      expect(list.nextAfter(99), equals(1));
+      expect(() => list.nextAfter(99), throwsArgumentError);
+    });
+
+    test('throws StateError on empty list', () {
+      const list = <int>[];
+
+      expect(() => list.nextAfter(1), throwsStateError);
     });
 
     test('works with strings', () {
@@ -343,20 +348,22 @@ void main() {
   });
 
   group('resizedDiscrete()', () {
-    test('returns original list when empty', () {
+    test('returns a new empty list when empty', () {
       const list = <int>[];
 
       final result = list.resizedDiscrete(5);
 
-      expect(result, same(list));
+      expect(result, isEmpty);
+      expect(result, isNot(same(list)));
     });
 
-    test('returns original list when length is the same', () {
+    test('returns a copy when length is the same', () {
       const list = [1, 2, 3, 4, 5];
 
       final result = list.resizedDiscrete(5);
 
-      expect(result, same(list));
+      expect(result, equals(list));
+      expect(result, isNot(same(list)));
     });
 
     test('downsamples to smaller length', () {

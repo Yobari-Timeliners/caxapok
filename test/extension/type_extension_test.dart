@@ -1,4 +1,4 @@
-import 'package:caxapok/src/extension/type_extension.dart';
+import 'package:caxapok/caxapok.dart';
 import 'package:test/test.dart';
 
 import '../stubs.dart';

@@ -32,7 +32,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+    strategy:
+      matrix:
+        # Lowest supported SDK from pubspec.yaml and the latest stable.
+        sdk: ['3.10.0', stable]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,7 +44,7 @@ jobs:
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
-          sdk: stable
+          sdk: ${{ matrix.sdk }}
 
       - name: Install dependencies
         run: dart pub get

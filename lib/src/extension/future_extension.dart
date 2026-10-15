@@ -14,6 +14,9 @@ extension FutureExtension<T> on Future<T> {
   /// If the original future completes before cancellation, the task completes normally
   /// and calling cancel afterwards has no effect.
   ///
+  /// Cancellation does not stop the original future: its work keeps running and its
+  /// result is discarded. Use [onCancel] to stop the underlying work.
+  ///
   /// The [onCancel] callback can be either synchronous or asynchronous (returning
   /// `void` or `Future<void>`). It's useful for cleanup operations like:
   /// - Closing network connections
@@ -64,6 +67,81 @@ extension FutureExtension<T> on Future<T> {
     future: this,
     onCancel: onCancel,
   );
+
+  /// Completes no earlier than [duration] after this method is called.
+  ///
+  /// Useful to keep a loading indicator visible long enough to avoid flicker.
+  /// Errors are delivered after [duration] as well.
+  ///
+  /// Example:
+  ///
+  /// ```dart
+  /// final data = await api.fetch().minDuration(const Duration(milliseconds: 300));
+  /// ```
+  Future<T> minDuration(Duration duration) async {
+    final delay = Future<void>.delayed(duration);
+
+    try {
+      return await this;
+    } finally {
+      await delay;
+    }
+  }
+}
+
+extension FutureFunctionExtension<T> on Future<T> Function() {
+  /// Calls this function until it succeeds, waiting [period] between attempts.
+  ///
+  /// Only [Exception]s are retried. An [Error] is rethrown immediately.
+  ///
+  /// Stops retrying once [timeout] has elapsed since the call:
+  /// * if an attempt fails and the next one would start after [timeout],
+  ///   the task completes with that attempt's error;
+  /// * if an attempt hangs past [timeout], the task completes with a [TimeoutException].
+  ///
+  /// Cancelling the returned task stops further attempts.
+  ///
+  /// Example:
+  ///
+  /// ```dart
+  /// final task = api.fetch.retry(
+  ///   period: const Duration(seconds: 1),
+  ///   timeout: const Duration(seconds: 10),
+  /// );
+  ///
+  /// final result = await task;
+  /// ```
+  CancellableTask<T> retry({
+    required Duration period,
+    required Duration timeout,
+  }) {
+    var isActive = true;
+    var canRetry = true;
+    // Past this point the next attempt would start after timeout.
+    final retryDeadline = Timer(timeout - period, () => canRetry = false);
+
+    Future<T> run() async {
+      while (true) {
+        try {
+          return await this();
+        } on Exception {
+          if (!isActive || !canRetry) rethrow;
+        }
+
+        await Future<void>.delayed(period);
+
+        if (!isActive) throw const TaskCancelledException();
+      }
+    }
+
+    return run()
+        .timeout(timeout)
+        .whenComplete(() {
+          isActive = false;
+          retryDeadline.cancel();
+        })
+        .cancellable(onCancel: () => isActive = false);
+  }
 }
 
 /// A [Future] that can be cancelled before it completes.
@@ -134,6 +212,8 @@ class CancellableTask<T> implements Future<T> {
       await _onCancel?.call();
     } finally {
       if (!_completer.isCompleted) {
+        // Cancelling without awaiting the task must not raise an unhandled error.
+        _completer.future.ignore();
         _completer.completeError(
           const TaskCancelledException(),
           StackTrace.current,

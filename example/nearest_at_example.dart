@@ -1,7 +1,7 @@
 // Example
 // ignore_for_file: avoid_print
 
-import 'package:caxapok/src/extension/list_extension.dart';
+import 'package:caxapok/caxapok.dart';
 
 void main() {
   print('=== NearestAt Advanced Examples ===\n');
@@ -32,7 +32,6 @@ void main() {
       2,
       configuration: const .new(
         searchDirection: .right,
-        bounds: .clamp,
       ),
     )}',
   ); // 4
@@ -46,8 +45,6 @@ void main() {
     '   nearestAt(2, positive only): ${predList.nearestAt(
       2,
       configuration: .new(
-        searchDirection: .both,
-        bounds: .clamp,
         predicate: (e) => e > 0,
       ),
     )}',
@@ -62,8 +59,6 @@ void main() {
     '   nearestAt(2, maxDistance=1): ${distList.nearestAt(
       2,
       configuration: const .new(
-        searchDirection: .both,
-        bounds: .clamp,
         maxDistance: 1,
       ),
     )}',
@@ -72,8 +67,6 @@ void main() {
     '   nearestAt(2, maxDistance=2): ${distList.nearestAt(
       2,
       configuration: const .new(
-        searchDirection: .both,
-        bounds: .clamp,
         maxDistance: 2,
       ),
     )}',
@@ -88,8 +81,6 @@ void main() {
     '   nearestAt(1, fallback=42): ${fallbackList.nearestAt(
       1,
       configuration: .new(
-        searchDirection: .both,
-        bounds: .clamp,
         fallback: () => 42,
       ),
     )}',
@@ -104,8 +95,7 @@ void main() {
     '   nearestAt(-1, clamp): ${boundsList.nearestAt(
       -1,
       configuration: const .new(
-        searchDirection: .both,
-        bounds: .clamp,
+        targetIndex: .include,
       ),
     )}',
   ); // 10
@@ -113,8 +103,8 @@ void main() {
     '   nearestAt(-1, wrap): ${boundsList.nearestAt(
       -1,
       configuration: const .new(
-        searchDirection: .both,
         bounds: .wrap,
+        targetIndex: .include,
       ),
     )}',
   ); // 30
@@ -122,8 +112,8 @@ void main() {
     '   nearestAt(-1, nullify): ${boundsList.nearestAt(
       -1,
       configuration: const .new(
-        searchDirection: .both,
         bounds: .nullify,
+        targetIndex: .include,
       ),
     )}',
   ); // null
@@ -138,7 +128,6 @@ void main() {
       3,
       configuration: .new(
         searchDirection: .right,
-        bounds: .clamp,
         maxDistance: 2,
         predicate: (e) => e.isEven,
       ),

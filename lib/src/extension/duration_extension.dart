@@ -90,7 +90,7 @@ extension DurationExtension on Duration {
   /// print(half); // Duration(seconds: 5)
   ///
   /// final third = duration / 3;
-  /// print(third); // Duration(seconds: 3, milliseconds: 333)
+  /// print(third); // 0:00:03.333333
   /// ```
   Duration operator /(double divider) => .new(microseconds: inMicroseconds ~/ divider);
 }
