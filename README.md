@@ -11,10 +11,8 @@
 
 ## Install
 
-```yaml
-dependencies:
-  caxapok:
-    git: https://github.com/Yobari-Timeliners/caxapok
+```sh
+dart pub add caxapok
 ```
 
 ```dart
