@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="doc/banner.png" alt="caxapok: a sugar cube on a retro refined-sugar pack" width="440">
+  <img src="https://raw.githubusercontent.com/Yobari-Timeliners/caxapok/main/doc/banner.png" alt="caxapok: a sugar cube on a retro refined-sugar pack" width="440">
 </p>
 
 <p align="center">
   <a href="https://github.com/Yobari-Timeliners/caxapok/actions/workflows/ci.yml"><img src="https://github.com/Yobari-Timeliners/caxapok/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="doc/badge.png" alt="caxap ok" height="20">
+  <img src="https://raw.githubusercontent.com/Yobari-Timeliners/caxapok/main/doc/badge.png" alt="caxap ok" height="20">
 </p>
 
 <p align="center"><b>Syntactic sugar for Dart:</b> small, tested extensions for everyday code.</p>
@@ -75,7 +75,7 @@ Run all CI checks locally: `./scripts/run_ci_locally.sh`. See [LOCAL_CI_TESTING.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="doc/logo-dark.png">
-    <img src="doc/logo-light.png" alt="caxapok" width="200">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Yobari-Timeliners/caxapok/main/doc/logo-dark.png">
+    <img src="https://raw.githubusercontent.com/Yobari-Timeliners/caxapok/main/doc/logo-light.png" alt="caxapok" width="200">
   </picture>
 </p>

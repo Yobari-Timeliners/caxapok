@@ -1,6 +1,6 @@
 name: caxapok
 description: Syntactic sugar for Dart. Extensions for List, Iterable, Duration and Future, plus Kotlin-style scope functions.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/Yobari-Timeliners/caxapok
 
 screenshots:
