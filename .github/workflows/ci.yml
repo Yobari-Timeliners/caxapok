@@ -79,6 +79,10 @@ jobs:
       - name: Install dependencies
         run: dart pub get
 
+      # pana needs webp tools to validate pubspec screenshots.
+      - name: Install webp
+        run: sudo apt-get update && sudo apt-get install -y webp
+
       - name: Verify pub score
         run: |
           dart pub global activate pana
