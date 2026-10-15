@@ -1,3 +1,7 @@
+## 0.1.2
+
+- Fix badge size in README on pub.dev.
+
 ## 0.1.1
 
 - Fix README images on pub.dev.

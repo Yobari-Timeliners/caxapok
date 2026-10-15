@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/Yobari-Timeliners/caxapok/actions/workflows/ci.yml"><img src="https://github.com/Yobari-Timeliners/caxapok/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://raw.githubusercontent.com/Yobari-Timeliners/caxapok/main/doc/badge.png" alt="caxap ok" height="20">
+  <img src="https://raw.githubusercontent.com/Yobari-Timeliners/caxapok/main/doc/badge.png" alt="caxap ok" width="83">
 </p>
 
 <p align="center"><b>Syntactic sugar for Dart:</b> small, tested extensions for everyday code.</p>
